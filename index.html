@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>زر المسابقة أونلاين</title>
+  <style>
+    body {
+      font-family: Tahoma, Arial, sans-serif;
+      background: linear-gradient(135deg, #141e30, #243b55);
+      color: white;
+      text-align: center;
+      padding: 40px;
+    }
+    input {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: none;
+      width: 220px;
+      text-align: center;
+    }
+    #buzzer {
+      margin-top: 40px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: red;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 30px;
+      font-weight: bold;
+      margin-left: auto;
+      margin-right: auto;
+      cursor: pointer;
+      user-select: none;
+    }
+    #result {
+      margin-top: 30px;
+      font-size: 22px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px 25px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: orange;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🏆 زر المسابقة (أونلاين)</h1>
+<p>كل المتسابقين في نفس الصفحة — أول ضاغط يفوز</p>
+
+<input id="nameInput" placeholder="اكتب اسمك">
+
+<div id="buzzer">اضغط</div>
+
+<div id="result"></div>
+
+<button onclick="resetBuzzer()">إعادة التعيين (للمشرف)</button>
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBL8jr-V7_K_np0kAR7UCjdoTc-fuHes6Y",
+    authDomain: "buzzer-online.firebaseapp.com",
+    projectId: "buzzer-online",
+    storageBucket: "buzzer-online.firebasestorage.app",
+    messagingSenderId: "150267695636",
+    appId: "1:150267695636:web:87cf73876e66f1b4bd4d01"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const buzzerRef = ref(db, 'buzzer');
+
+  const buzzer = document.getElementById('buzzer');
+  const result = document.getElementById('result');
+  const nameInput = document.getElementById('nameInput');
+
+  buzzer.onclick = () => {
+    const name = nameInput.value.trim();
+    if (!name) return alert('اكتب اسمك');
+
+    set(buzzerRef, {
+      name: name,
+      time: Date.now()
+    });
+  };
+
+  onValue(buzzerRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data && data.name) {
+      result.innerHTML = `🎉 أول ضاغط: <strong>${data.name}</strong>`;
+      buzzer.style.background = 'green';
+    } else {
+      result.innerHTML = '';
+      buzzer.style.background = 'red';
+    }
+  });
+
+  window.resetBuzzer = () => {
+    set(buzzerRef, null);
+  };
+</script>
+
+</body>
+</html>
