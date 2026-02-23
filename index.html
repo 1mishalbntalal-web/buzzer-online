@@ -48,6 +48,9 @@
       background: orange;
       cursor: pointer;
     }
+    audio {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -63,10 +66,12 @@
 
 <button onclick="resetBuzzer()">إعادة التعيين (للمشرف)</button>
 
+<audio id="buzzerSound" src="https://www.soundjay.com/button/sounds/button-16.mp3"></audio>
+
 <!-- Firebase -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+  import { getDatabase, ref, set, onValue, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBL8jr-V7_K_np0kAR7UCjdoTc-fuHes6Y",
@@ -80,10 +85,12 @@
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
   const buzzerRef = ref(db, 'buzzer');
+  const historyRef = ref(db, 'history');
 
   const buzzer = document.getElementById('buzzer');
   const result = document.getElementById('result');
   const nameInput = document.getElementById('nameInput');
+  const buzzerSound = document.getElementById('buzzerSound');
 
   buzzer.onclick = () => {
     const name = nameInput.value.trim();
@@ -93,6 +100,14 @@
       name: name,
       time: Date.now()
     });
+
+    // Add to history
+    push(historyRef, {
+      name: name,
+      time: Date.now()
+    });
+
+    buzzerSound.play();
   };
 
   onValue(buzzerRef, (snapshot) => {
@@ -109,6 +124,24 @@
   window.resetBuzzer = () => {
     set(buzzerRef, null);
   };
+
+  // Optional: display last 5 presses
+  const historyDiv = document.createElement('div');
+  historyDiv.style.marginTop = '20px';
+  historyDiv.style.fontSize = '18px';
+  document.body.appendChild(historyDiv);
+
+  onValue(historyRef, (snapshot) => {
+    const data = snapshot.val();
+    if (!data) {
+      historyDiv.innerHTML = '';
+      return;
+    }
+    const arr = Object.values(data);
+    arr.sort((a,b)=>a.time-b.time);
+    const last5 = arr.slice(-5).reverse();
+    historyDiv.innerHTML = '<strong>آخر 5 ضغوط:</strong><br>' + last5.map(d=>d.name).join('<br>');
+  });
 </script>
 
 </body>
